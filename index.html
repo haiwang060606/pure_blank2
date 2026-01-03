@@ -71,6 +71,48 @@
             font-weight: bold;
             text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
             text-align: center;
+            background-color: rgba(0, 0, 0, 0.3);
+            padding: 10px 15px;
+            border-radius: 8px;
+            backdrop-filter: blur(5px);
+        }
+        
+        .shortcut-hint .main-shortcut {
+            font-size: 20px;
+            margin-bottom: 5px;
+        }
+        
+        .shortcut-hint .main-shortcut .zh {
+            margin-bottom: 2px;
+        }
+        
+        .shortcut-hint .main-shortcut .en {
+            font-size: 16px;
+            opacity: 0.9;
+            font-weight: normal;
+        }
+        
+        .shortcut-hint .alternative-shortcuts {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-top: 5px;
+        }
+        
+        .shortcut-hint .alternative-shortcuts .en {
+            font-size: 12px;
+            opacity: 0.8;
+            margin-top: 2px;
+        }
+        
+        .browser-info {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            color: #333;
         }
         .color-selector-container {
             display: flex;
@@ -200,9 +242,19 @@
     <h1 class="app-title">Pureblank</h1>
     <div class="container">
         <div class="preview-container">
-            <div id="previewBox" class="preview-box" style="background-color: #0000ff;">
+            <div id="previewBox" class="preview-box" style="background-color: #000000;">
                 <button id="fullscreenBtn" class="fullscreen-btn">⛶</button>
-                <div class="shortcut-hint">按 F11 进入全屏</div>
+                <div class="shortcut-hint">
+                    <div class="main-shortcut" id="mainShortcut">
+                        <div class="zh">点击上方按钮进入全屏</div>
+                        <div class="en">Click button above to enter fullscreen</div>
+                    </div>
+                    <div class="alternative-shortcuts" id="alternativeShortcuts">
+                        <div class="zh" id="altZh"></div>
+                        <div class="en" id="altEn"></div>
+                    </div>
+                </div>
+                <div class="browser-info" id="browserInfo"></div>
             </div>
         </div>
         <div class="color-selector-container">
@@ -210,13 +262,13 @@
             <div class="color-selector-wrapper">
                 <div class="color-selector">
                     <!-- 黑白 -->
-                    <button class="color-btn" data-color="#000000"><div class="color-preview" style="background-color: #000000;"></div></button>
+                    <button class="color-btn active" data-color="#000000"><div class="color-preview" style="background-color: #000000;"></div></button>
                     <button class="color-btn" data-color="#ffffff"><div class="color-preview" style="background-color: #ffffff; border: 1px solid #e0e0e0;"></div></button>
                     
                     <!-- 标准RGB红绿蓝 -->
                     <button class="color-btn" data-color="#ff0000"><div class="color-preview" style="background-color: #ff0000;"></div></button>
                     <button class="color-btn" data-color="#00ff00"><div class="color-preview" style="background-color: #00ff00;"></div></button>
-                    <button class="color-btn active" data-color="#0000ff"><div class="color-preview" style="background-color: #0000ff;"></div></button>
+                    <button class="color-btn" data-color="#0000ff"><div class="color-preview" style="background-color: #0000ff;"></div></button>
                     
                     <!-- 其他热门颜色 -->
                     <button class="color-btn" data-color="#ffff00"><div class="color-preview" style="background-color: #ffff00;"></div></button>
@@ -248,11 +300,103 @@
         const scrollRightBtn = document.getElementById('scrollRightBtn');
         const colorSelector = document.querySelector('.color-selector');
         const colorSelectorWrapper = document.querySelector('.color-selector-wrapper');
+        const mainShortcut = document.getElementById('mainShortcut');
+        const alternativeShortcuts = document.getElementById('alternativeShortcuts');
+        const browserInfo = document.getElementById('browserInfo');
+        const altZh = document.getElementById('altZh');
+        const altEn = document.getElementById('altEn');
+
+        // 浏览器检测功能
+        function detectBrowser() {
+            const ua = navigator.userAgent;
+            let browserName = 'Unknown';
+            let browserVersion = '';
+            
+            if (ua.indexOf('Chrome') > -1 && ua.indexOf('Edg') === -1) {
+                browserName = 'Google Chrome';
+                browserVersion = ua.match(/Chrome\/(\d+)/)?.[1] || '';
+            } else if (ua.indexOf('Safari') > -1 && ua.indexOf('Chrome') === -1) {
+                browserName = 'Safari';
+                browserVersion = ua.match(/Version\/(\d+)/)?.[1] || '';
+            } else if (ua.indexOf('Firefox') > -1) {
+                browserName = 'Mozilla Firefox';
+                browserVersion = ua.match(/Firefox\/(\d+)/)?.[1] || '';
+            } else if (ua.indexOf('Edg') > -1) {
+                browserName = 'Microsoft Edge';
+                browserVersion = ua.match(/Edg\/(\d+)/)?.[1] || '';
+            }
+            
+            return { name: browserName, version: browserVersion };
+        }
+
+        // 获取全屏快捷键信息
+        function getFullscreenShortcuts() {
+            const browser = detectBrowser();
+            let shortcuts = [];
+            
+            // 根据浏览器提供不同的快捷键信息（支持双语）
+            switch (browser.name) {
+                case 'Google Chrome':
+                case 'Microsoft Edge':
+                    shortcuts = [
+                        { key: 'F11', descZh: '切换全屏模式', descEn: 'Toggle fullscreen' },
+                        { key: 'Ctrl+Shift+F', descZh: '进入全屏', descEn: 'Enter fullscreen' },
+                        { key: 'Alt+Enter', descZh: '进入全屏', descEn: 'Enter fullscreen' }
+                    ];
+                    break;
+                case 'Safari':
+                    shortcuts = [
+                        { key: 'Ctrl+⌘+F', descZh: '进入全屏', descEn: 'Enter fullscreen' },
+                        { key: 'Ctrl+⌘+Shift+F', descZh: '切换全屏', descEn: 'Toggle fullscreen' }
+                    ];
+                    break;
+                case 'Mozilla Firefox':
+                    shortcuts = [
+                        { key: 'F11', descZh: '全屏模式', descEn: 'Fullscreen mode' },
+                        { key: 'Ctrl+Shift+F', descZh: '进入全屏', descEn: 'Enter fullscreen' }
+                    ];
+                    break;
+                default:
+                    shortcuts = [
+                        { key: 'F11', descZh: '全屏模式', descEn: 'Fullscreen mode' },
+                        { key: 'Ctrl+Shift+F', descZh: '进入全屏', descEn: 'Enter fullscreen' }
+                    ];
+            }
+            
+            return { browser, shortcuts };
+        }
+
+        // 更新快捷键提示
+        function updateShortcutHints() {
+            const { browser, shortcuts } = getFullscreenShortcuts();
+            
+            // 设置浏览器信息
+            browserInfo.textContent = `${browser.name} ${browser.version}`;
+            
+            // 设置主要快捷键（最可靠的选项）
+            const primaryShortcut = shortcuts[0];
+            mainShortcut.querySelector('.zh').textContent = `快捷键: ${primaryShortcut.key}`;
+            mainShortcut.querySelector('.en').textContent = `Shortcut: ${primaryShortcut.key}`;
+            
+            // 设置替代快捷键
+            if (shortcuts.length > 1) {
+                const altShortcutsZh = shortcuts.slice(1).map(s => `${s.key}: ${s.descZh}`).join(' | ');
+                const altShortcutsEn = shortcuts.slice(1).map(s => `${s.key}: ${s.descEn}`).join(' | ');
+                altZh.textContent = `或者: ${altShortcutsZh}`;
+                altEn.textContent = `Or: ${altShortcutsEn}`;
+            } else {
+                altZh.textContent = '或点击上方按钮进入全屏';
+                altEn.textContent = 'Or click button above to enter fullscreen';
+            }
+        }
 
         // 当前选中的颜色
-        let currentColor = '#0000ff';
+        let currentColor = '#000000';
         // 初始化预览框颜色
         previewBox.style.backgroundColor = currentColor;
+
+        // 初始化快捷键提示
+        updateShortcutHints();
 
         // 颜色选择功能
         colorBtns.forEach(btn => {
@@ -318,12 +462,17 @@
         // 点击全屏按钮
         fullscreenBtn.addEventListener('click', toggleFullscreen);
 
-        // F11快捷键全屏
+        // 更智能的键盘快捷键支持
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'F11') {
+            // 检测常见的全屏快捷键组合
+            if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'F') {
+                e.preventDefault();
+                toggleFullscreen();
+            } else if (e.altKey && e.key === 'Enter') {
                 e.preventDefault();
                 toggleFullscreen();
             }
+            // 移除F11处理，因为通常由浏览器处理
         });
 
         // 监听全屏变化，更新预览框样式
