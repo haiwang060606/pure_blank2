@@ -237,7 +237,6 @@
             border-radius: 0;
         }
     </style>
-    </style>
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2593011210306092"
      crossorigin="anonymous">
     </script>
@@ -483,8 +482,20 @@
         document.addEventListener('fullscreenchange', () => {
             if (document.fullscreenElement === previewBox) {
                 previewBox.classList.add('fullscreen');
+                // 全屏模式下隐藏所有UI元素
+                document.querySelector('.shortcut-hint').style.display = 'none';
+                document.querySelector('.fullscreen-btn').style.display = 'none';
+                document.querySelector('.browser-info').style.display = 'none';
+                document.querySelector('.color-selector-container').style.display = 'none';
+                document.querySelector('.app-title').style.display = 'none';
             } else {
                 previewBox.classList.remove('fullscreen');
+                // 退出全屏时恢复所有UI元素
+                document.querySelector('.shortcut-hint').style.display = 'block';
+                document.querySelector('.fullscreen-btn').style.display = 'flex';
+                document.querySelector('.browser-info').style.display = 'block';
+                document.querySelector('.color-selector-container').style.display = 'flex';
+                document.querySelector('.app-title').style.display = 'block';
             }
         });
     </script>
